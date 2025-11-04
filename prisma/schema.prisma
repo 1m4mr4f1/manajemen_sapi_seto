@@ -1,0 +1,208 @@
+// 1. Konfigurasi koneksi (pastikan ini ada)
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 2. Definisikan ENUM untuk status pembayaran
+enum StatusPembayaran {
+  lunas
+  belum_lunas
+}
+
+// 3. Terjemahan 11 Model Anda
+
+// 1. Tabel Users
+model User {
+  id             BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  name           String     @db.VarChar(100)
+  username       String     @unique @db.VarChar(50)
+  password       String     @db.VarChar(255)
+  role           String     @default("kasir") @db.VarChar(20)
+  remember_token String?    @db.VarChar(100)
+  createdAt      DateTime   @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime   @updatedAt @db.Timestamp(0)
+
+  // Relasi: User bisa membuat banyak sales, purchases, dan expenses
+  sales     Sale[]
+  purchases Purchase[]
+  expenses  Expense[]
+
+  @@map("users") // Memberitahu Prisma agar nama tabelnya 'users' (bukan 'User')
+}
+
+// 2. Tabel Products
+model Product {
+  id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_barang       String   @db.VarChar(150)
+  stok              Int      @default(0)
+  harga_jual        Decimal  @db.Decimal(10, 2)
+  harga_beli_terakhir Decimal? @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime @updatedAt @db.Timestamp(0)
+
+  // Relasi
+  saleDetails    SaleDetail[]
+  purchaseDetails PurchaseDetail[]
+
+  @@map("products")
+}
+
+// 3. Tabel Suppliers
+model Supplier {
+  id            BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_supplier String     @db.VarChar(100)
+  kontak        String?    @db.VarChar(100)
+  createdAt     DateTime   @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime   @updatedAt @db.Timestamp(0)
+
+  // Relasi
+  purchases Purchase[]
+
+  @@map("suppliers")
+}
+
+// 4. Tabel Customers
+model Customer {
+  id             BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  nama_pelanggan String   @db.VarChar(100)
+  kontak         String?  @db.VarChar(100)
+  createdAt      DateTime @default(now()) @db.Timestamp(0)
+  updatedAt      DateTime @updatedAt @db.Timestamp(0)
+
+  // Relasi
+  sales Sale[]
+
+  @@map("customers")
+}
+
+// 5. Tabel Sales
+model Sale {
+  id                BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  userId            BigInt           @db.UnsignedBigInt
+  customerId        BigInt?          @db.UnsignedBigInt // Opsional
+  tanggal_penjualan DateTime         @db.DateTime(0)
+  subtotal          Decimal          @db.Decimal(10, 2)
+  discount          Decimal          @default(0) @db.Decimal(10, 2)
+  total_akhir       Decimal          @db.Decimal(10, 2)
+  status_pembayaran StatusPembayaran // Menggunakan ENUM
+  note              String?          @db.Text
+  createdAt         DateTime         @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime         @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  user      User      @relation(fields: [userId], references: [id])
+  customer  Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull) // Jika customer dihapus, field ini jadi NULL
+  
+  saleDetails SaleDetail[]
+  payments    PaymentReceivable[]
+
+  @@map("sales")
+}
+
+// 6. Tabel Purchases
+model Purchase {
+  id                  BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  userId              BigInt           @db.UnsignedBigInt
+  supplierId          BigInt           @db.UnsignedBigInt
+  tanggal_pembelian   DateTime         @db.DateTime(0)
+  total_pembelian     Decimal          @db.Decimal(10, 2)
+  status_pembayaran   StatusPembayaran // Menggunakan ENUM
+  note                String?          @db.Text
+  createdAt           DateTime         @default(now()) @db.Timestamp(0)
+  updatedAt           DateTime         @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  user     User     @relation(fields: [userId], references: [id])
+  supplier Supplier @relation(fields: [supplierId], references: [id])
+  
+  purchaseDetails PurchaseDetail[]
+  payments        PaymentPayable[]
+
+  @@map("purchases")
+}
+
+// 7. Tabel Expenses
+model Expense {
+  id                  BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId              BigInt   @db.UnsignedBigInt
+  tanggal_pengeluaran DateTime @db.Date // SQL 'DATE' menjadi 'DateTime @db.Date'
+  jenis_pengeluaran   String   @db.VarChar(50)
+  nominal             Decimal  @db.Decimal(10, 2)
+  keterangan          String?  @db.Text
+  createdAt           DateTime @default(now()) @db.Timestamp(0)
+  updatedAt           DateTime @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("expenses")
+}
+
+// 8. Tabel Sale_Details
+model SaleDetail {
+  id              BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  saleId          BigInt   @db.UnsignedBigInt
+  productId       BigInt?  @db.UnsignedBigInt // Opsional
+  jumlah          Int
+  harga_saat_jual Decimal  @db.Decimal(10, 2)
+  createdAt       DateTime @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  sale    Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade) // Jika sale dihapus, detail ikut terhapus
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull) // Jika produk dihapus, field ini jadi NULL
+
+  @@map("sale_details")
+}
+
+// 9. Tabel Purchase_Details
+model PurchaseDetail {
+  id                BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  purchaseId        BigInt   @db.UnsignedBigInt
+  productId         BigInt?  @db.UnsignedBigInt // Opsional
+  jumlah            Int
+  harga_saat_beli   Decimal  @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @db.Timestamp(0)
+  updatedAt         DateTime @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  product  Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@map("purchase_details")
+}
+
+// 10. Tabel Payments_Receivable (Piutang)
+model PaymentReceivable {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  saleId       BigInt   @db.UnsignedBigInt
+  tanggal_bayar DateTime @db.Date
+  jumlah_bayar  Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now()) @db.Timestamp(0)
+  updatedAt    DateTime @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@map("payments_receivable")
+}
+
+// 11. Tabel Payments_Payable (Hutang)
+model PaymentPayable {
+  id            BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  purchaseId    BigInt   @db.UnsignedBigInt
+  tanggal_bayar  DateTime @db.Date
+  jumlah_bayar   Decimal  @db.Decimal(10, 2)
+  createdAt     DateTime @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime @updatedAt @db.Timestamp(0)
+
+  // Definisi Relasi
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@map("payments_payable")
+}
