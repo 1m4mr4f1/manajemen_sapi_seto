@@ -8,20 +8,19 @@ import {
 } from '@/app/lib/data/product.data';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { Prisma } from '@prisma/client'; // Impor untuk tipe Decimal
+import { Prisma } from '@prisma/client'; 
 
-// Skema validasi Zod yang disesuaikan dengan database
 const ProductSchema = z.object({
   nama_barang: z.string().min(3, { message: 'Nama barang minimal 3 karakter' }),
   stok: z.coerce.number().gte(0, { message: 'Stok tidak boleh negatif' }),
   harga_jual: z.coerce
     .number()
     .gt(0, { message: 'Harga jual harus lebih dari 0' })
-    .transform((val) => new Prisma.Decimal(val)), // Ubah jadi Decimal
+    .transform((val) => new Prisma.Decimal(val)), 
   harga_beli_terakhir: z.coerce
     .number()
     .gt(0, { message: 'Harga beli harus lebih dari 0' })
-    .transform((val) => new Prisma.Decimal(val)), // Ubah jadi Decimal
+    .transform((val) => new Prisma.Decimal(val)), 
 });
 
 // Tipe State untuk error handling, disesuaikan
