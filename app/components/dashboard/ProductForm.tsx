@@ -1,7 +1,16 @@
 'use client';
 
 import { useActionState } from 'react';
-import type { Product } from '@prisma/client';
+// Tipe produk yang dikirim dari Server Component setelah diserialisasi
+export type SerializedProduct = {
+  id: string;
+  nama_barang: string;
+  stok: number;
+  harga_jual?: number | null;
+  harga_beli_terakhir?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
 import type { State } from '@/app/lib/actions';
 
 // Komponen tombol submit
@@ -24,7 +33,7 @@ export default function ProductForm({
   product,
 }: {
   action: (prevState: State, formData: FormData) => Promise<State>;
-  product?: Product | null;
+  product?: SerializedProduct | null;
 }) {
   const initialState: State = { message: null, errors: {} };
   const [state, dispatch, pending] = useActionState(action, initialState) as [State, any, boolean];
@@ -63,8 +72,7 @@ export default function ProductForm({
           type="number"
           id="harga_beli_terakhir"
           name="harga_beli_terakhir"
-          // @ts-ignore - Decimal dikonversi ke string untuk input
-          defaultValue={product?.harga_beli_terakhir?.toString()}
+          defaultValue={product?.harga_beli_terakhir != null ? String(product.harga_beli_terakhir) : undefined}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           aria-describedby="hargabeli-error"
         />
@@ -87,8 +95,7 @@ export default function ProductForm({
           type="number"
           id="harga_jual"
           name="harga_jual"
-          // @ts-ignore - Decimal dikonversi ke string untuk input
-          defaultValue={product?.harga_jual?.toString()}
+          defaultValue={product?.harga_jual != null ? String(product.harga_jual) : undefined}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           aria-describedby="hargajual-error"
         />
