@@ -5,7 +5,7 @@ import {
   createProduct,
   deleteProduct,
   updateProduct,
-} from '@/app/lib/data/product';
+} from '@/app/lib/data/product.data';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { Prisma } from '@prisma/client'; // Impor untuk tipe Decimal

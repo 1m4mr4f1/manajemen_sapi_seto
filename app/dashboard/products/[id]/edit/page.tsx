@@ -1,6 +1,6 @@
 import ProductForm from '@/app/components/dashboard/ProductForm';
-import { updateProductAction } from '@/app/lib/actions';
-import { getProductById } from '@/app/lib/data/product';
+import { updateProductAction } from '@/app/lib/actions/product.actions';
+import { getProductById } from '@/app/lib/data/product.data';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';

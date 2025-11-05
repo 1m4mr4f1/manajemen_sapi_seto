@@ -1,5 +1,5 @@
 import ProductForm from '@/app/components/dashboard/ProductForm';
-import { createProductAction } from '@/app/lib/actions';
+import { createProductAction } from '@/app/lib/actions/product.actions';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 

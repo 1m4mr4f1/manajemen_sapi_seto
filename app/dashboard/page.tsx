@@ -1,5 +1,5 @@
 import ProductTable from '@/app/components/dashboard/ProductTable';
-import { getProducts } from '@/app/lib/data/product';
+import { getProducts } from '@/app/lib/data/product.data';
 import Link from 'next/link';
 
 export default async function DashboardPage() {

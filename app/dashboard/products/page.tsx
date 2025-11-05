@@ -1,5 +1,5 @@
 // 1. Impor Model
-import { getProducts } from '@/app/lib/data/product';
+import { getProducts } from '@/app/lib/data/product.data';
 
 // 2. Impor View
 import ProductTable from '@/app/components/dashboard/ProductTable';

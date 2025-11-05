@@ -1,6 +1,6 @@
 'use client';
 
-import { deleteProductAction } from '@/app/lib/actions';
+import { deleteProductAction } from '@/app/lib/actions/product.actions';
 import type { Product } from '@prisma/client';
 import { Pencil, Trash2, Loader2 } from 'lucide-react';
 import Link from 'next/link';

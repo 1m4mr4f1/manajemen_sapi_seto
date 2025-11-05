@@ -11,7 +11,7 @@ export type SerializedProduct = {
   createdAt?: string | null;
   updatedAt?: string | null;
 };
-import type { State } from '@/app/lib/actions';
+import type { State } from '@/app/lib/actions/product.actions';
 
 // Komponen tombol submit
 function SubmitButton({ label, pending }: { label: string; pending: boolean }) {
