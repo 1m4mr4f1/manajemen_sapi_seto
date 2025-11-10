@@ -21,7 +21,6 @@ const navItems = [
   { href: '/dashboard/products', icon: Package, label: 'Produk' },
   { href: '/dashboard/sales', icon: ShoppingCart, label: 'Penjualan' },
   { href: '/dashboard/purchases', icon: Warehouse, label: 'Pembelian' },
-  { href: '/dashboard/transactions', icon: ArrowLeftRight, label: 'Transaksi' },
   { href: '/dashboard/suppliers', icon: Users, label: 'Suppliers' },
   { href: '/dashboard/customers', icon: Users, label: 'Pelanggan' },
   { href: '/dashboard/reports', icon: TrendingUp, label: 'Laporan' },

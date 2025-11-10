@@ -17,19 +17,21 @@ const formatCurrency = (value: number) => {
 export default function SaleForm({
   action,
   products = [],
+  customers = [],
 }: {
   action: (state: void | SaleState, payload: FormData) => Promise<void | SaleState>;
   products?: Array<{ id: string; nama_barang: string; stok: number; harga_jual?: number | null }>;
+  customers?: Array<{ id: string; nama_pelanggan: string }>;
 }) {
   const initial = undefined;
   const [state, dispatch, pending] = useActionState(action, initial) as [SaleState | undefined, any, boolean];
 
-  // State untuk item
-  // Keep productId empty initially so dropdown placeholder shows and summary is empty
+  // State untuk item dan pembayaran
   const [productId, setProductId] = useState<string>('');
-  // jumlah and discount start empty (user requested no default zeros)
   const [jumlah, setJumlah] = useState<string>('');
   const [discount, setDiscount] = useState<string>('');
+  const [paymentType, setPaymentType] = useState<'lunas' | 'cicil'>('lunas');
+  const [downPayment, setDownPayment] = useState<string>('');
 
   // Perhitungan turunan
   const selectedProduct = useMemo(() => products.find((p) => p.id === productId), [products, productId]);
@@ -57,7 +59,15 @@ export default function SaleForm({
   );
 
   // Simple client-side validity
-  const isFormValid = productId !== '' && jumlah !== '' && Number(jumlah) >= 1 && harga != null;
+  const isFormValid = 
+    productId !== '' && 
+    jumlah !== '' && 
+    Number(jumlah) >= 1 && 
+    harga != null &&
+    (paymentType === 'lunas' || (paymentType === 'cicil' && 
+      downPayment !== '' && 
+      Number(downPayment) >= 0 && 
+      (totalAkhir ? Number(downPayment) <= totalAkhir : true)));
 
   // Efek untuk set produk default
   useEffect(() => {
@@ -121,6 +131,26 @@ export default function SaleForm({
           </div>
         </div>
 
+        {/* === BAGIAN CUSTOMER === */}
+        <div className="relative z-10">
+          <label htmlFor="customerId" className="block text-sm font-medium text-gray-800">
+            Pilih Pelanggan (Opsional)
+          </label>
+          <select
+            id="customerId"
+            name="customerId"
+            defaultValue=""
+            className="mt-1 block w-full rounded-md border-gray-300 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          >
+            <option value="">-- Pelanggan Umum --</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nama_pelanggan}
+              </option>
+            ))}
+          </select>
+        </div>
+
         {/* === BAGIAN DISKON === */}
         <div>
           <label htmlFor="discount" className="block text-sm font-medium text-gray-800">
@@ -129,12 +159,68 @@ export default function SaleForm({
           <input
             id="discount"
             type="number"
-            name="discount" // Pastikan name ada untuk FormData
+            name="discount"
             value={discount}
             onChange={(e) => setDiscount(e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             placeholder="Contoh: 10"
           />
+        </div>
+
+        {/* === BAGIAN PEMBAYARAN === */}
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-800">
+            Jenis Pembayaran
+          </label>
+          <div className="flex gap-6">
+            <label className="relative flex cursor-pointer items-center rounded-full p-3 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="status_pembayaran"
+                value="lunas"
+                checked={paymentType === 'lunas'}
+                onChange={(e) => setPaymentType(e.target.value as 'lunas' | 'cicil')}
+                className="h-4 w-4 cursor-pointer border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600"
+              />
+              <span className="ml-3 text-sm font-medium text-gray-900">Lunas</span>
+            </label>
+            <label className="relative flex cursor-pointer items-center rounded-full p-3 hover:bg-gray-50">
+              <input
+                type="radio"
+                name="status_pembayaran"
+                value="belum_lunas"
+                checked={paymentType === 'cicil'}
+                onChange={(e) => setPaymentType(e.target.value as 'lunas' | 'cicil')}
+                className="h-4 w-4 cursor-pointer border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-600"
+              />
+              <span className="ml-3 text-sm font-medium text-gray-900">Cicil</span>
+            </label>
+          </div>
+
+          {/* Form pembayaran pertama muncul jika memilih cicil */}
+          {paymentType === 'cicil' && (
+            <div className="mt-4">
+              <label htmlFor="downPayment" className="block text-sm font-medium text-gray-800">
+                Pembayaran Pertama
+              </label>
+              <input
+                id="downPayment"
+                type="number"
+                name="downPayment"
+                value={downPayment}
+                onChange={(e) => setDownPayment(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Masukkan jumlah pembayaran pertama"
+                min={0}
+                max={totalAkhir || undefined}
+              />
+              {totalAkhir && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Sisa yang harus dibayar: {formatCurrency(totalAkhir - (Number(downPayment) || 0))}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* === BAGIAN RINGKASAN (READ-ONLY) === */}

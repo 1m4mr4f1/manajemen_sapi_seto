@@ -5,10 +5,9 @@ import prisma from "@/app/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-// 1. Skema Validasi Zod untuk data pengeluaran.
 const ExpenseSchema = z.object({
   id: z.string(),
-  // TODO: Ganti userId hardcode setelah implementasi autentikasi
+
   userId: z.bigint().default(BigInt(1)), // Default ini sebenarnya tidak terpakai jika userId tidak ada di input form
   tanggal_pengeluaran: z.string().refine((date) => !isNaN(Date.parse(date)), {
     message: "Tanggal pengeluaran harus diisi.",

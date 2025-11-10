@@ -81,9 +81,13 @@ export async function createSaleAction(prev: SaleState, formData: FormData) {
       tanggalObj = new Date();
     }
 
+    // Get customerId from form
+    const customerIdRaw = formData.get('customerId');
+    const customerId = customerIdRaw && String(customerIdRaw).trim() !== '' ? String(customerIdRaw) : null;
+
     const payload = {
       userId: userIdFromSession,
-      customerId: null,
+      customerId: customerId,
       tanggal_penjualan: tanggalObj,
       items,
       subtotal: new Prisma.Decimal(subtotal),
@@ -92,6 +96,21 @@ export async function createSaleAction(prev: SaleState, formData: FormData) {
       status_pembayaran: String(formData.get('status_pembayaran') || 'belum_lunas'),
       note: null,
     } as any;
+
+    // Get downPayment if cicilan
+    const downPaymentRaw = formData.get('downPayment');
+    const downPayment = downPaymentRaw ? Number(downPaymentRaw) : null;
+
+    // Validate downPayment if status is belum_lunas
+    if (payload.status_pembayaran === 'belum_lunas') {
+      if (!downPayment || downPayment <= 0 || downPayment > total_akhir) {
+        return {
+          errors: { downPayment: ['Pembayaran pertama harus diisi dan tidak boleh melebihi total'] },
+          message: 'Validasi gagal'
+        };
+      }
+      payload.firstPayment = new Prisma.Decimal(downPayment);
+    }
 
     // call createSale
     try {

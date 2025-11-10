@@ -57,8 +57,9 @@ export async function createSale(data: {
   discount: Prisma.Decimal;
   total_akhir: Prisma.Decimal;
   status_pembayaran: 'lunas' | 'belum_lunas';
+  firstPayment?: Prisma.Decimal;
   note?: string | null;
-  items: Array<{ productId: string; jumlah: number; harga_saat_jual: Prisma.Decimal }>; 
+  items: Array<{ productId: string; jumlah: number; harga_saat_jual: Prisma.Decimal }>;
 }) {
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -98,6 +99,17 @@ export async function createSale(data: {
           // Jika product tidak ditemukan, lanjutkan — transaksi akan rollback jika error dilempar
           console.warn('Gagal update stok produk saat createSale:', err);
         }
+      }
+
+      // 3) If there's a first payment for cicilan, create payment record
+      if (data.status_pembayaran === 'belum_lunas' && data.firstPayment) {
+        await tx.paymentReceivable.create({
+          data: {
+            saleId: sale.id,
+            tanggal_bayar: new Date(),
+            jumlah_bayar: data.firstPayment,
+          },
+        });
       }
 
       return sale;
