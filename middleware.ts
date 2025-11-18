@@ -1,10 +1,16 @@
-// File: middleware.ts (di root folder)
+import { withAuth } from "next-auth/middleware";
 
-export { default } from "next-auth/middleware"
+// Gunakan export default function secara eksplisit
+export default withAuth({
+  // Halaman login (jika user belum login akan dilempar ke sini)
+  pages: {
+    signIn: "/login",
+  },
+});
 
-// Tentukan halaman mana yang ingin Anda lindungi
-export const config = { 
+// Konfigurasi matcher
+export const config = {
   matcher: [
-    "/dashboard/:path*", // Melindungi semua rute di bawah /dashboard
-  ] 
+    "/dashboard/:path*", 
+  ],
 };

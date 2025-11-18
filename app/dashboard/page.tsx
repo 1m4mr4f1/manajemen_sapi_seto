@@ -6,19 +6,22 @@ export default async function DashboardPage() {
   const products = await getProducts();
 
   // Serialize products: convert BigInt/Decimal/Date to plain JS values
-  const serializedProducts = products.map((p: any) => ({
+  const serializedProducts = products.map((p) => ({
     ...p,
-    id: String(p.id),
-    harga_jual:
-      p.harga_jual && typeof p.harga_jual === 'object' && typeof p.harga_jual.toNumber === 'function'
-        ? p.harga_jual.toNumber()
-        : Number(p.harga_jual),
-    harga_beli_terakhir:
-      p.harga_beli_terakhir && typeof p.harga_beli_terakhir === 'object' && typeof p.harga_beli_terakhir.toNumber === 'function'
-        ? p.harga_beli_terakhir.toNumber()
-        : Number(p.harga_beli_terakhir),
-    createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : null,
-    updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString() : null,
+    // 1. Konversi BigInt ke String
+    id: p.id.toString(),
+
+    // 2. Konversi Decimal ke Number
+    // PENTING: Akses properti asli dari database ('selling_price'), bukan 'harga_jual'
+    selling_price: p.selling_price ? p.selling_price.toNumber() : 0,
+    
+    // Akses properti asli ('last_purchase_price'), bukan 'harga_beli_terakhir'
+    last_purchase_price: p.last_purchase_price ? p.last_purchase_price.toNumber() : 0,
+
+    // 3. Konversi Date ke String ISO
+    // Akses properti asli ('created_at' & 'update_at'), bukan 'createdAt'/'updatedAt'
+    created_at: p.created_at ? new Date(p.created_at).toISOString() : null,
+    update_at: p.update_at ? new Date(p.update_at).toISOString() : null,
   }));
 
   return (
@@ -42,6 +45,7 @@ export default async function DashboardPage() {
       <div className="space-y-4">
         <div className="text-sm text-gray-700">Total produk: {serializedProducts.length}</div>
 
+        {/* Pastikan ProductTable Anda siap menerima props dengan nama key bahasa Inggris (selling_price, dsb) */}
         <ProductTable products={serializedProducts} />
       </div>
     </div>

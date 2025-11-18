@@ -1,108 +1,114 @@
 'use client';
 
-import { deleteProductAction } from '@/app/lib/actions/product.actions';
-import type { Product } from '@prisma/client';
-import { Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useTransition } from 'react';
+import { deleteProductAction } from '@/app/lib/actions/product.actions'; // 1. Import Action Hapus
 
-// Fungsi untuk format mata uang
-function formatCurrency(amount: number | string | any) {
-  // Konversi 'any' (dari Decimal) ke number
-  const numericAmount = typeof amount === 'object' ? Number(amount) : amount;
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(numericAmount);
+// Definisi tipe data
+interface Product {
+  id: string;
+  product_name: string;
+  stock: number;
+  selling_price: number;
+  last_purchase_price: number;
 }
 
-// Tombol Delete
-function DeleteButton({ id }: { id: string }) {
-  const [isPending, startTransition] = useTransition();
+interface ProductTableProps {
+  products: Product[];
+}
 
-  const handleDelete = () => {
-    if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-      startTransition(async () => {
+export default function ProductTable({ products }: ProductTableProps) {
+  
+  // Helper untuk format Rupiah
+  const formatRupiah = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  // 2. Buat fungsi handler untuk menghapus
+  const handleDelete = async (id: string) => {
+    const confirmed = confirm('Yakin ingin menghapus produk ini? Data yang dihapus tidak dapat dikembalikan.');
+    
+    if (confirmed) {
+      try {
+        // Panggil Server Action
         await deleteProductAction(id);
-      });
+        // Tidak perlu reload manual, Server Action akan melakukan revalidatePath
+      } catch (error) {
+        console.error('Gagal menghapus:', error);
+        alert('Gagal menghapus produk.');
+      }
     }
   };
 
   return (
-    <button
-      onClick={handleDelete}
-      disabled={isPending}
-      className={`rounded p-1.5 text-sm font-medium 
-                  ${isPending ? 'text-gray-400' : 'text-red-600 hover:bg-red-100'}`}
-      aria-label="Hapus produk"
-    >
-      {isPending ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Trash2 className="h-4 w-4" />
-      )}
-    </button>
-  );
-}
-
-// Komponen Tabel Utama
-export default function ProductTable({ products }: { products: Product[] }) {
-  if (products.length === 0) {
-    return <p className="text-gray-500">Belum ada produk.</p>;
-  }
-
-  return (
-    <div className="overflow-x-auto rounded-lg bg-white shadow">
+    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm bg-white">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Nama Barang
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Harga Beli
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Harga Jual
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-              Stok (kg)
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Stok
             </th>
-            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Aksi
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
-          {products.map((product) => (
-            <tr key={product.id}>
-              <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                {product.nama_barang}
-              </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                {formatCurrency(product.harga_beli_terakhir)}
-              </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                {formatCurrency(product.harga_jual)}
-              </td>
-              <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                {product.stok}
-              </td>
-              <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                <div className="flex items-center justify-end gap-2">
-                  <Link
-                    href={`/dashboard/products/${product.id}/edit`}
-                    className="rounded p-1.5 text-blue-600 hover:bg-blue-100"
-                    aria-label="Edit produk"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                  <DeleteButton id={product.id.toString()} />
-                </div>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {products.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="px-6 py-8 text-center text-sm text-gray-500">
+                Belum ada data produk.
               </td>
             </tr>
-          ))}
+          ) : (
+            products.map((product) => (
+              <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {product.product_name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatRupiah(product.last_purchase_price)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {formatRupiah(product.selling_price)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {product.stock}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex justify-end gap-3">
+                    <Link
+                      href={`/dashboard/products/${product.id}/edit`}
+                      className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </Link>
+                    
+                    {/* 3. Hubungkan tombol dengan fungsi handleDelete */}
+                    <button
+                      className="text-red-600 hover:text-red-900 transition-colors"
+                      onClick={() => handleDelete(product.id)}
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

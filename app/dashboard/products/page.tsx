@@ -14,21 +14,22 @@ export default async function ProductsPage() {
   const products = await getProducts();
 
   // Serialize produk: ubah Decimal/BigInt/Date menjadi plain JS values
-  const serializedProducts = products.map((p: any) => ({
+  const serializedProducts = products.map((p) => ({
     ...p,
-    id: String(p.id),
-    harga_jual: p.harga_jual
-      ? typeof p.harga_jual === 'object' && typeof p.harga_jual.toNumber === 'function'
-        ? p.harga_jual.toNumber()
-        : Number(p.harga_jual)
-      : null,
-    harga_beli_terakhir: p.harga_beli_terakhir
-      ? typeof p.harga_beli_terakhir === 'object' && typeof p.harga_beli_terakhir.toNumber === 'function'
-        ? p.harga_beli_terakhir.toNumber()
-        : Number(p.harga_beli_terakhir)
-      : null,
-    createdAt: p.createdAt ? new Date(p.createdAt).toISOString() : null,
-    updatedAt: p.updatedAt ? new Date(p.updatedAt).toISOString() : null,
+    // 1. Ubah BigInt ke String
+    id: p.id.toString(),
+
+    // 2. Ubah Decimal ke Number
+    // PENTING: Gunakan key 'selling_price' (sesuai database) untuk menimpa object Decimal bawaan Prisma
+    selling_price: p.selling_price ? p.selling_price.toNumber() : 0,
+    
+    // PENTING: Gunakan key 'last_purchase_price' (sesuai database)
+    last_purchase_price: p.last_purchase_price ? p.last_purchase_price.toNumber() : 0,
+
+    // 3. Ubah Date ke String ISO
+    // Gunakan key 'created_at' dan 'update_at' (sesuai database)
+    created_at: p.created_at ? new Date(p.created_at).toISOString() : null,
+    update_at: p.update_at ? new Date(p.update_at).toISOString() : null,
   }));
 
   // 4. Controller memutuskan apa yang akan ditampilkan
@@ -37,7 +38,7 @@ export default async function ProductsPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-800">Manajemen Produk</h1>
         <Link
-          href="/dashboard/products/create" // Nanti kita buat halaman ini
+          href="/dashboard/products/create" 
           className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           <Plus className="h-4 w-4" />

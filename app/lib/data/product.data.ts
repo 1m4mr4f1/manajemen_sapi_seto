@@ -1,14 +1,14 @@
 import prisma from '@/app/lib/prisma';
-import { Prisma, Product } from '@prisma/client'; // Impor tipe Product jika ada
+import { Prisma, Product } from '@prisma/client';
 
 /**
- * Mengambil SEMUA produk (Sudah ada)
+ * Mengambil SEMUA produk
  */
 export async function getProducts() {
   try {
     const products = await prisma.product.findMany({
       orderBy: {
-        nama_barang: 'asc',
+        product_name: 'asc', // PERBAIKAN: Menggunakan 'product_name' sesuai kolom database
       },
     });
     return products;
@@ -60,7 +60,6 @@ export async function getProductById(id: string) {
 /**
  * MEMBUAT produk baru
  */
-// Tipe data di sini sudah benar. 'data' disiapkan oleh Server Action.
 export async function createProduct(
   data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>,
 ) {
